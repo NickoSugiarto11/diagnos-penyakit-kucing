@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Analisis Kemiripan Penyakit Kucing</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<div class="w">
+  <h1>Analisis Kemiripan Penyakit Kucing</h1>
+  <p class="sub">Pilih gejala yang dialami kucing Anda. Sistem menghitung kemiripan dengan 5 kasus penyakit memakai metode Case-Based Reasoning (k-Nearest Neighbor).</p>
+
+  <div class="g">
+    <form class="c" method="post" action="/">
+      <h2>1. Pilih gejala</h2>
+      {% for kode, (nama, bobot) in gejala.items() %}
+      <label class="s {{ 'on' if kode in dipilih }}">
+        <input type="checkbox" name="gejala" value="{{ kode }}" {{ 'checked' if kode in dipilih }}>
+        <span>{{ nama }}</span>
+        <b>{{ kode }} · bobot {{ bobot }}</b>
+      </label>
+      {% endfor %}
+      <div class="bt">
+        <button class="p" type="submit">Analisis kemiripan</button>
+        <a class="btn" href="/">Reset</a>
+      </div>
+    </form>
+
+    <div class="c">
+      <h2>2. Hasil kemiripan</h2>
+
+      {% if hasil %}
+        {% for r in hasil %}
+        <div class="r {{ 'top' if loop.first and r.sim > 0 }}">
+          <div class="hd">
+            <strong>{{ '🏆 ' if loop.first and r.sim > 0 }}{{ r.nama }}</strong>
+            <span class="pc">{{ r.sim | persen }}</span>
+          </div>
+          <div class="bar"><i style="width: {{ r.sim * 100 }}%"></i></div>
+          <div class="m">Ketepatan: {{ r.pre | persen }}
+            {% if r.sim >= 0.9 %}· <b>kecocokan tinggi (≥90%)</b>{% endif %}</div>
+          <div class="d">{{ r.deskripsi }}</div>
+          <div class="d">
+            {% for k in r.cocok %}<span class="tg">✓ {{ gejala[k][0] }}</span>{% endfor %}
+            {% for k in r.belum %}<span class="tg x">○ {{ gejala[k][0] }}</span>{% endfor %}
+          </div>
+          {% if r.lain %}
+          <div class="m" style="margin-top:6px">Gejala pilihan di luar kasus ini: {{ r.lain | join(', ') }}</div>
+          {% endif %}
+        </div>
+        {% endfor %}
+      {% elif request.method == 'POST' %}
+        <p class="m">Belum ada gejala yang dipilih.</p>
+      {% else %}
+        <p class="m">Pilih minimal satu gejala lalu tekan “Analisis kemiripan”.</p>
+      {% endif %}
+
+      <div class="wr">Hasil ini hanya diagnosa awal.</div>
+    </div>
+  </div>
+
+  <p class="f">Rumus kemiripan: <code>Σ(similarity × bobot) / Σ bobot</code>, dihitung pada gejala milik tiap kasus. Data diambil dari Tabel 1-3 jurnal Fidyaningsih dkk. (2016).</p>
+</div>
+</body>
+</html>
